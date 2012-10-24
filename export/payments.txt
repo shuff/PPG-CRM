@@ -1,0 +1,4 @@
+merchant_id,company_name,rep_name,commission_amount,total_commissions_due
+8788290324947,Geers Grocery,shannon huff,50,
+8788290324925,DOWNTOWN MINI MALL 1,Casey steele,70,
+8788290324928,DOWNTOWN MINI MALL 2,Casey steele,60,

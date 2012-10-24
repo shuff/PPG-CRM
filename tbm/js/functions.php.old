@@ -1,0 +1,345 @@
+<?php
+set_error_handler('fileErrorHandler');
+//******************************************************************************
+//  					STANDARD BACKGROUND CHECK
+//******************************************************************************
+/*
+//check if calling from the correct domain.
+$pageURL = trim($_SERVER["SERVER_NAME"]);
+if ($pageURL != 'www.bestfigs.com' && $pageURL != 'apps.thewoodlandsumc.org' && $pageURL != 'comm.thewoodlandsumc.org' && $pageURL != 'cm-dev.thewoodlandsumc.org'&& $pageURL != 'dev.thewoodlandsumc.org')
+{
+	echo '<h1>Could not process request.</h1>';
+	die();
+}
+ * 
+ */
+//******************************************************************************
+//						SET CLASSES
+//******************************************************************************
+
+$action = new action;
+
+//******************************************************************************
+
+//******************************************************************************
+//						INCOMMING REQUESTS
+//******************************************************************************
+
+if (isset($_REQUEST['in_group'])){
+	$client_id = mysql_real_escape_string($_REQUEST['in_group']);
+	$table = mysql_real_escape_string($_REQUEST['table']);
+	$doit = $action->in_group($client_id,$table);
+	die($doit);
+}
+if (isset($_REQUEST['get_field_value'])){
+	$table = mysql_real_escape_string($_REQUEST['table']);
+	$field = mysql_real_escape_string($_REQUEST['field']);
+	$pkey_field = mysql_real_escape_string($_REQUEST['pkey_field']);
+	$pkey_value = mysql_real_escape_string($_REQUEST['pkey_value']);
+	$doit = $action->get_field_value($table,$field,$pkey_field,$pkey_value);
+	die($doit);
+}
+if (isset($_REQUEST['load_grid'])){
+	$doit = $action->load_grid();
+	die($doit);
+}
+//******************************************************************************
+class action
+{
+	
+	public function load_grid()
+	{
+		require_once "class.goodies.php";
+		$goodies_class = new goodies;
+	
+		$sqllogin = $goodies_class->getlogin();
+		$sqlpassword = $goodies_class->getpassword();
+		$host = $goodies_class->gethost();
+		$db = $goodies_class->getdbname();
+	
+		$con = mysql_connect("$host","$sqllogin","$sqlpassword");
+	
+		if (!$con){
+			die('Could not connect: ' . mysql_error());
+		}
+		mysql_select_db("$db", $con);
+		$result = '';
+		$row = '';
+		$message = '<table>';
+		$id = '';
+		//$color = '#E8E8E8';
+		$color = '#E8E8E8';
+		$result = mysql_query("SELECT * FROM recipient INNER JOIN need ON recipient.pkey = need.recipient_id ");
+		while($row = mysql_fetch_array($result))
+		{
+			if ($color == 'transparent'){
+				$color = '#E8E8E8';
+			}
+			else
+			{
+				$color = 'transparent';
+			}
+			$message = $message.'<tr style="background:'.$color.';">';
+			$recipient_id= $row['pkey'];
+			$family_id= $row['family_id'];
+
+			
+			$qColumnNames = mysql_query("SHOW COLUMNS FROM recipient") or die("mysql error");
+			$numColumns = mysql_num_rows($qColumnNames);
+			$x = 0;
+			while ($x < $numColumns)
+			{
+    			$colname = mysql_fetch_row($qColumnNames);
+    			$col[$colname[0]] = $x;
+					
+				if ($colname[0] != 'timestamp')	{
+						
+					//$recipient_col_name.$colname[0] = 'goit';				
+							
+		
+					$message = $message . '<td><div id="'.$recipient_id.'|grid_recipient|'.$colname[0].'"class="grid_cell">'.$row[$colname[0]] . '</td>';
+		
+				} 
+				
+					$x++;
+						
+			}
+					
+			$qColumnNames = mysql_query("SHOW COLUMNS FROM need") or die("mysql error");
+			$numColumns = mysql_num_rows($qColumnNames);
+			$x = 0;
+			while ($x < $numColumns)
+			{
+    			$colname = mysql_fetch_row($qColumnNames);
+    			$col[$colname[0]] = $x;
+					
+				if ($colname[0] != 'timestamp' && $colname[0] != 'pkey')	{
+						
+					//$recipient_col_name.$colname[0] = 'goit';				
+							
+		
+					$message = $message . '<td><div id="'.$recipient_id.'|grid_recipient|'.$colname[0].'" class="grid_cell">'.$row[$colname[0]] . '</td>';
+		
+				} 
+				
+					$x++;
+						
+			}
+
+				$action = new action;
+				$sponsor = $action->get_field_value('sponsor', 'name', 'recipient_id', $recipient_id);
+			//	$family_id = $action->get_field_value('recipient', 'family_id', 'pkey', $recipient_id);
+				$family = $action->get_field_value('family', 'name', 'id', $family_id);
+				$organization_id = $action->get_field_value('family', 'organization_id', 'id', $family_id);
+				$organization = $action->get_field_value('organization', 'name', 'pkey', $organization_id);
+				$collector_id = $action->get_field_value('family', 'collector_id', 'id', $family_id);
+				$collector = $action->get_field_value('collector', 'name', 'pkey', $collector_id);
+				$message = $message . '<td><div id="'.$recipient_id.'|grid|recipient|sponsor" class="grid_cell">'.$sponsor . '</td>';
+				$message = $message . '<td><div id="'.$recipient_id.'|grid|recipient|family" class="grid_cell">'.$family . '</td>';
+				$message = $message . '<td><div id="'.$recipient_id.'|grid|recipient|organization" class="grid_cell">'.$organization . '</td>';
+				$message = $message . '<td><div id="'.$recipient_id.'|grid|recipient|collector" class="grid_cell">'.$collector. '</td>';
+	
+			/*
+				$qColumnNames = mysql_query("SHOW COLUMNS FROM family") or die("mysql error");
+				$numColumns = mysql_num_rows($qColumnNames);
+				$x = 0;
+				while ($x < $numColumns)
+				{
+    				$colname = mysql_fetch_row($qColumnNames);
+    				$col[$colname[0]] = $x;
+					
+					if ($colname[0] == 'name')	{
+						
+						//$recipient_col_name.$colname[0] = 'goit';				
+							
+		
+						$message = $message . '<td><div id="grid_recipient_'.$colname[0].'">'.$row[$colname[0]] . '</td>';
+		
+					} 
+				
+						$x++;
+						
+				}
+			
+				$qColumnNames = mysql_query("SHOW COLUMNS FROM sponsor") or die("mysql error");
+				$numColumns = mysql_num_rows($qColumnNames);
+				$x = 0;
+				while ($x < $numColumns)
+				{
+    				$colname = mysql_fetch_row($qColumnNames);
+    				$col[$colname[0]] = $x;
+					
+					if ($colname[0] != 'name')	{
+						
+						//$recipient_col_name.$colname[0] = 'goit';				
+							
+		
+						$message = $message . '<td><div id="grid_recipient_'.$colname[0].'">'.$row[$colname[0]] . '</td>';
+		
+					} 
+				
+						$x++;
+						
+				}
+	
+				$qColumnNames = mysql_query("SHOW COLUMNS FROM consuler") or die("mysql error");
+				$numColumns = mysql_num_rows($qColumnNames);
+				$x = 0;
+				while ($x < $numColumns)
+				{
+    				$colname = mysql_fetch_row($qColumnNames);
+    				$col[$colname[0]] = $x;
+					
+					if ($colname[0] == 'name')	{
+						
+						//$recipient_col_name.$colname[0] = 'goit';				
+							
+		
+						$message = $message . '<td><div id="grid_recipient_'.$colname[0].'">'.$row[$colname[0]] . '</td>';
+		
+					} 
+				
+						$x++;
+						
+				}	
+				
+				$qColumnNames = mysql_query("SHOW COLUMNS FROM orgainzation") or die("mysql error");
+				$numColumns = mysql_num_rows($qColumnNames);
+				$x = 0;
+				while ($x < $numColumns)
+				{
+    				$colname = mysql_fetch_row($qColumnNames);
+    				$col[$colname[0]] = $x;
+					
+					if ($colname[0] == 'name')	{
+						
+						//$recipient_col_name.$colname[0] = 'goit';				
+							
+		
+						$message = $message . '<td><div id="grid_recipient_'.$colname[0].'">'.$row[$colname[0]] . '</td>';
+		
+					} 
+				
+						$x++;
+						
+				}
+
+		$result2 = mysql_query("SELECT * FROM sponsor WHERE recipient_id = '$id'");
+		while($row2 = mysql_fetch_array($result2))
+		{
+	
+			$message = $message . '<td><div id="grid_recipient_sponsor">'.$row2['name'] . '</td>';
+
+			
+		}
+		$result3 = mysql_query("SELECT * FROM family WHERE id = '$fam_id'");
+		while($row3 = mysql_fetch_array($result3))
+		{
+	
+			$message = $message . '<td><div id="grid_recipient_family_name">'.$row3['name'] . '</td>';
+
+			
+		}
+		*/
+	
+	}
+		
+			
+	return $message . '</tr></table>';		
+
+	
+	}
+	public function in_group($client_id,$table)
+	{
+		require_once "class.goodies.php";
+		$goodies_class = new goodies;
+	
+		$sqllogin = $goodies_class->getlogin();
+		$sqlpassword = $goodies_class->getpassword();
+		$host = $goodies_class->gethost();
+		$db = $goodies_class->getdbname();
+	
+		$con = mysql_connect("$host","$sqllogin","$sqlpassword");
+	
+		if (!$con){die('Could not connect: ' . mysql_error());}
+		mysql_select_db("$db", $con);
+		
+		// 1
+		$result = '';
+		$row = '';
+		$foundit = 'false';
+		
+		$result = mysql_query("SELECT * FROM $table WHERE client_id = '$client_id'");		
+		while($row = mysql_fetch_array($result))
+		{
+			$foundit = $row['pkey'];
+		}
+		
+		if ($foundit != 'false'){return 'true';}else{return 'false';}
+	}
+	
+	public function get_field_value($table,$field,$pkey_field,$pkey_value)
+	{
+		require_once "class.goodies.php";
+		$goodies_class = new goodies;
+	
+		$sqllogin = $goodies_class->getlogin();
+		$sqlpassword = $goodies_class->getpassword();
+		$host = $goodies_class->gethost();
+		$db = $goodies_class->getdbname();
+	
+		$con = mysql_connect("$host","$sqllogin","$sqlpassword");
+	
+		if (!$con){die('Could not connect: ' . mysql_error());}
+		mysql_select_db("$db", $con);
+		$result = '';
+		$row = '';
+		$foundit = '';
+		$result = mysql_query("SELECT * FROM $table WHERE $pkey_field = '$pkey_value'");
+			
+		while($row = mysql_fetch_array($result))
+		{
+			$foundit = $row[$field];
+		}
+			
+			return $foundit;
+	}
+	public function exists($table,$field,$value)
+	{
+		require_once "class.goodies.php";
+		$goodies_class = new goodies;
+	
+		$sqllogin = $goodies_class->getlogin();
+		$sqlpassword = $goodies_class->getpassword();
+		$host = $goodies_class->gethost();
+		$db = $goodies_class->getdbname();
+	
+		$con = mysql_connect("$host","$sqllogin","$sqlpassword");
+	
+		if (!$con){
+			die('Could not connect: ' . mysql_error());
+		}
+			mysql_select_db("$db", $con);
+			$result = '';
+			$row = '';
+			$foundit = 'false';
+			$result = mysql_query("SELECT * FROM $table WHERE $field = '$value'");
+			
+			while($row = mysql_fetch_array($result))
+			{
+				if ($value = $row[$field])
+				{
+					$foundit = 'true';
+				}
+			}
+			
+			return $foundit;
+		}
+	
+}
+//******************************************************************************
+
+function fileErrorHandler($errnum,$errmsg,$file,$lineno){
+	echo 'Error: '.$errmsg.'<br> File: '.$file.'<br> Line: '.$lineno;
+}
+?>
