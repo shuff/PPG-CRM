@@ -28,7 +28,7 @@ mysql_query("TRUNCATE TABLE `emailtodb_words`");
 
 */
 $edb = new EMAIL_TO_DB();
-$edb->connect('imap.gmail.com:993', '/imap/ssl/novalidate-cert', 'info@patriotpaymentgroup.com', 'interchange');
+$edb->connect('imap.gmail.com:993', '/imap/ssl/novalidate-cert', 'info@patriotpaymentgroup.com', 'ADD PASSWORD HERE');
 echo "Connected to IMAP server, starting update.<br>";
 $edb->db_update();
 echo "Finished, closing connection.";
